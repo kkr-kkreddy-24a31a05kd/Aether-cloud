@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aether Cloud | Enterprise Analytics</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono&display=swap');
+        
+        :root {
+            --aws-orange: #FF9900;
+            --aws-navy: #232f3e;
+            --bg-canvas: #0f172a;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-canvas);
+            color: #f8fafc;
+            overflow-x: hidden;
+        }
+
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 1.5rem;
+        }
+
+        .aws-gradient {
+            background: linear-gradient(135deg, #FF9900 0%, #FF6600 100%);
+        }
+
+        .auth-overlay {
+            position: fixed;
+            inset: 0;
+            background: #020617;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.8s cubic-bezier(0.87, 0, 0.13, 1);
+        }
+
+        .hide-auth {
+            transform: translateY(-100%);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(255, 153, 0, 0.4);
+        }
+
+        .nav-item.active {
+            background: rgba(51, 65, 85, 1);
+            color: white;
+        }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+    </style>
+</head>
+<body>
+
+    <!-- Instant Access Login -->
+    <div id="authOverlay" class="auth-overlay">
+        <div class="text-center p-8 max-w-md w-full">
+            <div class="w-20 h-20 bg-white rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-2xl shadow-orange-500/20">
+                <svg class="w-12 h-12 text-[#232f3e]" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 0L1.5 6v12L12 24l10.5-6V6L12 0zm0 3.3L19.2 7.5L12 11.7L4.8 7.5L12 3.3zM4.5 16.5V9l7.5 4.2v7.5l-7.5-4.2zm15 0l-7.5 4.2v-7.5l7.5-4.2v7.5z"/>
+                </svg>
+            </div>
+            <h1 class="text-3xl font-bold mb-2 uppercase tracking-tighter">Aether <span class="text-orange-500 font-extrabold">Cloud</span></h1>
+            <p class="text-slate-400 mb-8 text-sm">Enterprise Data Infrastructure • 2026</p>
+            
+            <button onclick="unlockDashboard()" class="w-full aws-gradient text-white font-bold py-4 rounded-xl shadow-lg shadow-orange-500/20 hover:scale-[1.02] transition-all active:scale-95 flex items-center justify-center space-x-2">
+                <span>Enter Admin Console</span>
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
+            </button>
+            <p class="mt-6 text-[10px] text-slate-500 uppercase tracking-widest font-bold">Public Administrative Node 01</p>
+        </div>
+    </div>
+
+    <!-- Main Dashboard -->
+    <div class="flex min-h-screen">
+        <!-- Sidebar -->
+        <aside class="w-72 bg-[#020617] border-r border-slate-800 hidden lg:flex flex-col p-6 fixed h-full">
+            <div class="flex items-center space-x-3 mb-12">
+                <div class="w-10 h-10 bg-orange-500 rounded-xl flex items-center justify-center text-white font-bold">A</div>
+                <span class="font-bold tracking-tight text-xl">Aether Intelligence</span>
+            </div>
+            
+            <nav id="sidebarNav" class="space-y-2 flex-1">
+                <button onclick="switchTab(this)" class="nav-item active w-full flex items-center space-x-3 text-slate-400 px-4 py-3 rounded-xl font-medium transition-all">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                    <span>Dashboard</span>
+                </button>
+                <button onclick="switchTab(this)" class="nav-item w-full flex items-center space-x-3 text-slate-400 hover:text-white px-4 py-3 rounded-xl transition-all">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2-20"></path></svg>
+                    <span>Analytics</span>
+                </button>
+                <button onclick="switchTab(this)" class="nav-item w-full flex items-center space-x-3 text-slate-400 hover:text-white px-4 py-3 rounded-xl transition-all">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path></svg>
+                    <span>Configuration</span>
+                </button>
+            </nav>
+
+            <div class="mt-auto glass-panel p-4">
+                <p class="text-[10px] text-slate-500 font-bold uppercase mb-2">Authenticated User</p>
+                <p class="text-sm font-bold truncate">Admin Session 0x7F</p>
+                <div class="mt-4 flex items-center space-x-2 text-emerald-400">
+                    <div class="w-2 h-2 bg-emerald-500 rounded-full animate-ping"></div>
+                    <span class="text-xs font-bold uppercase tracking-tight">System Optimized</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 lg:ml-72 p-6 lg:p-10">
+            <!-- Header -->
+            <header class="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-4">
+                <div>
+                    <h2 class="text-3xl font-bold tracking-tight">System Overview</h2>
+                    <p class="text-slate-500 text-sm mt-1">Real-time telemetry across 14 global regions.</p>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <select onchange="updateRegion(this.value)" class="bg-slate-800 text-xs font-bold p-3 rounded-xl border border-slate-700 text-slate-300 focus:outline-none focus:ring-2 focus:ring-orange-500 cursor-pointer">
+                        <option value="us-east-1">REGION: US-EAST-1</option>
+                        <option value="eu-west-1">REGION: EU-WEST-1</option>
+                        <option value="ap-south-1">REGION: AP-SOUTH-1</option>
+                    </select>
+                    <button onclick="generateReport()" class="aws-gradient px-6 py-3 rounded-xl text-sm font-bold shadow-lg shadow-orange-500/10 hover:shadow-orange-500/30 transition-all">Generate Report</button>
+                </div>
+            </header>
+
+            <!-- Top Stats -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="glass-panel p-6 stat-card transition-all cursor-default">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="p-3 bg-blue-500/10 rounded-xl"><svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg></div>
+                        <span class="text-emerald-400 text-xs font-bold font-mono">+12.4%</span>
+                    </div>
+                    <h3 class="text-slate-400 text-sm font-medium mb-1">Total Requests</h3>
+                    <p class="text-2xl font-bold tracking-tight" id="reqCount">1,248,423</p>
+                </div>
+
+                <div class="glass-panel p-6 stat-card transition-all cursor-default">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="p-3 bg-orange-500/10 rounded-xl"><svg class="w-6 h-6 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg></div>
+                        <span class="text-slate-400 text-xs font-bold font-mono">NOMINAL</span>
+                    </div>
+                    <h3 class="text-slate-400 text-sm font-medium mb-1">Avg. Latency</h3>
+                    <p class="text-2xl font-bold tracking-tight" id="latencyVal">39ms</p>
+                </div>
+
+                <div class="glass-panel p-6 stat-card transition-all cursor-default">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="p-3 bg-purple-500/10 rounded-xl"><svg class="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg></div>
+                        <span class="text-blue-400 text-xs font-bold font-mono">3 ACTIVE</span>
+                    </div>
+                    <h3 class="text-slate-400 text-sm font-medium mb-1">Compute Nodes</h3>
+                    <p class="text-2xl font-bold tracking-tight">142 Units</p>
+                </div>
+
+                <div class="glass-panel p-6 stat-card transition-all cursor-default">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="p-3 bg-emerald-500/10 rounded-xl"><svg class="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
+                        <span class="text-amber-400 text-xs font-bold font-mono">BUDGET ALERT</span>
+                    </div>
+                    <h3 class="text-slate-400 text-sm font-medium mb-1">Mtd Cost</h3>
+                    <p class="text-2xl font-bold tracking-tight">$4,290.41</p>
+                </div>
+            </div>
+
+            <!-- Dashboard Body -->
+            <div class="grid grid-cols-1 xl:grid-cols-3 gap-8 mb-8">
+                <div class="xl:col-span-2 glass-panel p-8">
+                    <div class="flex items-center justify-between mb-8">
+                        <div>
+                            <h3 class="text-xl font-bold">Network Throughput</h3>
+                            <p class="text-slate-500 text-sm">Real-time bitstream analysis across CDN nodes.</p>
+                        </div>
+                        <div class="flex bg-slate-800 p-1 rounded-lg border border-slate-700">
+                             <button onclick="toggleChart(this, 24)" class="text-xs font-bold py-2 px-4 rounded-md bg-slate-700 text-white transition-all">Last 24 Hours</button>
+                             <button onclick="toggleChart(this, 7)" class="text-xs font-bold py-2 px-4 rounded-md text-slate-400 hover:text-slate-200 transition-all">Last 7 Days</button>
+                        </div>
+                    </div>
+                    <div class="h-80">
+                        <canvas id="throughputChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="glass-panel p-8 flex flex-col">
+                    <h3 class="text-xl font-bold mb-2">Neural Prediction</h3>
+                    <p class="text-slate-500 text-sm mb-8">AI-driven infrastructure health forecast.</p>
+                    
+                    <div class="flex-1 space-y-6">
+                        <div class="relative pt-1">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-xs font-bold text-orange-400 uppercase tracking-widest">Self-Healing Integrity</span>
+                                <span id="healthPct" class="text-xs font-bold">98%</span>
+                            </div>
+                            <div class="overflow-hidden h-2 text-xs flex rounded bg-slate-800">
+                                <div id="neuralProgress" style="width:98%" class="aws-gradient rounded-full transition-all duration-1000"></div>
+                            </div>
+                        </div>
+
+                        <div class="p-6 bg-slate-900/50 rounded-2xl border border-slate-800 border-l-4 border-l-emerald-500">
+                            <p class="text-xs font-bold text-slate-500 uppercase mb-2">Engine Insight</p>
+                            <p id="insightText" class="text-sm leading-relaxed italic text-slate-300">
+                                "Load balancer redistribution successful. Predicted traffic spike at 14:00 UTC handled by auto-scaling group 'delta-7'."
+                            </p>
+                        </div>
+
+                        <button onclick="runNeuralScan()" class="w-full mt-4 bg-slate-800 hover:bg-slate-700 py-4 rounded-xl text-xs font-bold uppercase tracking-widest transition-all">
+                            Initiate Deep Scan
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Logs Section -->
+            <div class="glass-panel overflow-hidden border border-slate-800">
+                <div class="p-6 border-b border-slate-800 flex justify-between items-center bg-slate-900/20">
+                    <h3 class="font-bold">Recent System Events</h3>
+                    <div class="flex items-center space-x-2">
+                        <span class="relative flex h-2 w-2">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+                        </span>
+                        <span class="text-[10px] text-blue-400 px-2 py-1 rounded font-bold uppercase">Streaming Live</span>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead>
+                            <tr class="text-slate-500 text-[11px] uppercase tracking-widest border-b border-slate-800">
+                                <th class="p-6 font-bold">Timestamp</th>
+                                <th class="p-6 font-bold">Resource ID</th>
+                                <th class="p-6 font-bold">Event Type</th>
+                                <th class="p-6 font-bold">Risk Level</th>
+                                <th class="p-6 font-bold">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="logTable" class="text-sm">
+                            <!-- Live updates injected here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Footer Credit -->
+            <footer class="mt-20 py-10 border-t border-slate-800 text-center">
+                <p class="text-slate-500 text-xs font-bold uppercase tracking-[0.4em] mb-4">Created by KKREDDY • 2026</p>
+                <div class="flex flex-col items-center gap-2">
+                    <span class="text-orange-500 font-mono text-sm">kkreddy.kkr4@gmail.com</span>
+                    <span class="text-slate-600 text-[10px] uppercase font-bold tracking-widest">Efficiency Verified • Cloud Analytics Suite v4.5</span>
+                </div>
+            </footer>
+        </main>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="fixed bottom-10 right-10 transform translate-y-20 opacity-0 transition-all duration-500 z-[9999]">
+        <div id="toastContent" class="glass-panel p-6 border-l-4 border-l-orange-500 flex items-center space-x-4 shadow-2xl bg-[#1e293b]">
+            <div id="toastIcon" class="w-10 h-10 bg-orange-500/20 rounded-full flex items-center justify-center text-orange-500">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            </div>
+            <div>
+                <p id="toastTitle" class="text-sm font-bold">Operation Complete</p>
+                <p id="toastMsg" class="text-xs text-slate-400">Task executed successfully.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let myChart;
+
+        // AUTH BYPASS
+        function unlockDashboard() {
+            document.getElementById('authOverlay').classList.add('hide-auth');
+            initCharts();
+            startLiveUpdates();
+            populateInitialLogs();
+        }
+
+        // SIDEBAR NAVIGATION FUNCTIONALITY
+        function switchTab(btn) {
+            document.querySelectorAll('.nav-item').forEach(i => {
+                i.classList.remove('active', 'bg-slate-800', 'text-white');
+                i.classList.add('text-slate-400');
+            });
+            btn.classList.add('active', 'bg-slate-800', 'text-white');
+            showToast("Navigation", "Navigated to " + btn.innerText);
+        }
+
+        // REGION UPDATER
+        function updateRegion(val) {
+            showToast("Region Changed", "Switched infrastructure to " + val.toUpperCase());
+            // Logic to re-initialize data can go here
+        }
+
+        // REPORT GENERATOR
+        function generateReport() {
+            showToast("Generating PDF", "Building system report... Please wait.");
+            setTimeout(() => {
+                window.print();
+            }, 1000);
+        }
+
+        // LIVE UPDATES LOGIC
+        function startLiveUpdates() {
+            const reqLabel = document.getElementById('reqCount');
+            const latencyLabel = document.getElementById('latencyVal');
+            const table = document.getElementById('logTable');
+            
+            let reqs = 1248423;
+            
+            setInterval(() => {
+                reqs += Math.floor(Math.random() * 85);
+                reqLabel.innerText = reqs.toLocaleString();
+                
+                const lat = 36 + Math.floor(Math.random() * 7);
+                latencyLabel.innerText = lat + 'ms';
+
+                if (Math.random() > 0.85) {
+                    const res = ['i-0fd828', 'vps-gateway-01', 'rds-master', 'lambda-auth', 's3-media-prod'];
+                    const ev = ['Scaling Initiated', 'DNS Handshake', 'Memory Flush', 'API Cold Start', 'Bucket Audit'];
+                    addLogRow(table, res[Math.floor(Math.random()*5)], ev[Math.floor(Math.random()*5)]);
+                    if (table.children.length > 8) table.removeChild(table.lastChild);
+                }
+            }, 3000);
+        }
+
+        function populateInitialLogs() {
+            const table = document.getElementById('logTable');
+            const res = ['i-0fd828', 'vps-gateway-01', 'rds-master', 'lambda-auth', 's3-media-prod', 'i-0fd828'];
+            const ev = ['Scaling Initiated', 'DNS Handshake', 'Memory Flush', 'API Cold Start', 'Bucket Audit', 'Scaling Initiated'];
+            res.forEach((r, i) => addLogRow(table, r, ev[i]));
+        }
+
+        function addLogRow(container, res, event) {
+            const row = document.createElement('tr');
+            row.className = 'border-b border-slate-800 hover:bg-slate-800/30 transition-colors';
+            row.innerHTML = `
+                <td class="p-6 font-mono text-xs text-slate-400">${new Date().toLocaleTimeString()}</td>
+                <td class="p-6 font-bold text-slate-200">${res}</td>
+                <td class="p-6 text-slate-300">${event}</td>
+                <td class="p-6">
+                    <span class="text-[10px] px-2 py-1 rounded bg-blue-500/10 text-blue-400 font-bold uppercase">Minor</span>
+                </td>
+                <td class="p-6">
+                    <div class="flex items-center space-x-2">
+                        <div class="w-1.5 h-1.5 bg-emerald-500 rounded-full"></div>
+                        <span class="text-emerald-400 font-bold">COMPLETED</span>
+                    </div>
+                </td>
+            `;
+            container.prepend(row);
+        }
+
+        // CHART LOGIC
+        function initCharts() {
+            const ctx = document.getElementById('throughputChart').getContext('2d');
+            const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+            gradient.addColorStop(0, 'rgba(255, 153, 0, 0.3)');
+            gradient.addColorStop(1, 'rgba(255, 153, 0, 0)');
+
+            myChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '23:59'],
+                    datasets: [{
+                        label: 'Gbps',
+                        data: [12, 19, 15, 25, 22, 30, 28],
+                        borderColor: '#FF9900',
+                        backgroundColor: gradient,
+                        fill: true,
+                        tension: 0.4,
+                        borderWidth: 3,
+                        pointRadius: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#64748b' } },
+                        x: { grid: { display: false }, ticks: { color: '#64748b' } }
+                    }
+                }
+            });
+        }
+
+        function toggleChart(btn, mode) {
+            // Update UI buttons
+            const parent = btn.parentElement;
+            parent.querySelectorAll('button').forEach(b => {
+                b.classList.remove('bg-slate-700', 'text-white');
+                b.classList.add('text-slate-400');
+            });
+            btn.classList.add('bg-slate-700', 'text-white');
+            btn.classList.remove('text-slate-400');
+
+            // Update Chart Data
+            const newData = mode === 24 ? [12, 19, 15, 25, 22, 30, 28] : [110, 140, 105, 160, 180, 200, 190];
+            const newLabels = mode === 24 ? ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '23:59'] : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+            
+            myChart.data.labels = newLabels;
+            myChart.data.datasets[0].data = newData;
+            myChart.update();
+        }
+
+        // NEURAL ENGINE
+        function runNeuralScan() {
+            const btn = event.target;
+            const progress = document.getElementById('neuralProgress');
+            const pct = document.getElementById('healthPct');
+            const insight = document.getElementById('insightText');
+            
+            btn.innerText = "PROCESSING VECTOR SPACE...";
+            btn.disabled = true;
+            progress.style.width = "10%";
+            pct.innerText = "10%";
+            
+            setTimeout(() => {
+                progress.style.width = "99.2%";
+                pct.innerText = "99.2%";
+                insight.innerText = "Vector space alignment complete. All edge nodes verified. Performance at maximum efficiency.";
+                btn.innerText = "RE-SCAN COMPLETE";
+                btn.disabled = false;
+                showToast("Neural Engine", "Deep scan finished. Efficiency: 99.2%");
+            }, 2500);
+        }
+
+        // TOAST SYSTEM
+        function showToast(title, msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastTitle').innerText = title;
+            document.getElementById('toastMsg').innerText = msg;
+            
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 4000);
+        }
+    </script>
+</body>
+</html>
